@@ -1,6 +1,5 @@
 from telethon import TelegramClient
 from telethon.tl.functions.messages import ForwardMessagesRequest
-from telethon.sessions import StringSession
 import asyncio
 import logging
 import random
@@ -9,9 +8,8 @@ import os
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
-API_HASH = os.environ.get("API_HASH", "")
 API_ID = 31620520
-SESSION_STRING = os.environ.get("SESSION_STRING", "")
+API_HASH = os.environ.get("API_HASH", "")
 
 SOURCE_CHANNEL = "synogu"
 MESSAGE_ID_TO_FORWARD = 17
@@ -26,8 +24,7 @@ TARGET_CHANNELS = [
 
 FORWARD_DELAY = 2.0
 
-string_session = StringSession(SESSION_STRING) if SESSION_STRING else StringSession()
-client = TelegramClient(string_session, API_ID, API_HASH)
+client = TelegramClient("forwarder", API_ID, API_HASH)
 
 
 async def forward_message(message):
@@ -41,7 +38,7 @@ async def forward_message(message):
                 entity = await client.get_entity(channel)
                 text = message.text or message.caption or ""
                 await client.send_message(entity, text, reply_to=topic_id, link_preview=False)
-                logger.info(f"Sent to {channel} topic {topic_id} (no preview)")
+                logger.info(f"Sent to {channel} topic {topic_id}")
             elif topic_id:
                 entity = await client.get_entity(channel)
                 await client(ForwardMessagesRequest(
@@ -51,30 +48,33 @@ async def forward_message(message):
                     top_msg_id=topic_id,
                     random_id=[random.randint(0, 2**31)],
                 ))
-                logger.info(f"Forwarded to {channel} (topic {topic_id})")
+                logger.info(f"Forwarded to {channel} topic {topic_id}")
             elif no_preview:
                 text = message.text or message.caption or ""
                 await client.send_message(channel, text, link_preview=False)
-                logger.info(f"Sent to {channel} (no preview)")
+                logger.info(f"Sent to {channel}")
             else:
                 await client.forward_messages(channel, message)
                 logger.info(f"Forwarded to {channel}")
             success += 1
         except Exception as e:
-            logger.error(f"Failed to forward to {channel}: {e}")
+            logger.error(f"Failed to {channel}: {e}")
             failed += 1
         await asyncio.sleep(FORWARD_DELAY)
-    logger.info(f"Done - {success} succeeded, {failed} failed.")
+    logger.info(f"Cycle done - {success} OK, {failed} failed")
 
 
 async def main():
     await client.start()
-    logger.info("Client started and authenticated.")
+    logger.info("Authenticated")
     while True:
-        message = await client.get_messages(SOURCE_CHANNEL, ids=MESSAGE_ID_TO_FORWARD)
-        if message:
-            await forward_message(message)
-        await asyncio.sleep(60)  # 60 second gap to avoid Telegram spam ban
+        try:
+            message = await client.get_messages(SOURCE_CHANNEL, ids=MESSAGE_ID_TO_FORWARD)
+            if message:
+                await forward_message(message)
+        except Exception as e:
+            logger.error(f"Error: {e}")
+        await asyncio.sleep(60)
 
 
 if __name__ == "__main__":
