@@ -14,7 +14,7 @@ API_ID = 31620520
 SESSION_STRING = os.environ.get("SESSION_STRING", "")
 
 SOURCE_CHANNEL = "synogu"
-MESSAGE_ID_TO_FORWARD = 15
+MESSAGE_ID_TO_FORWARD = 17
 
 TARGET_CHANNELS = [
     {"channel": "flips"},
