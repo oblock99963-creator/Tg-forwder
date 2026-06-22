@@ -15,7 +15,6 @@ SESSION_STRING = os.environ.get("SESSION_STRING", "")
 
 SOURCE_CHANNEL = "synogu"
 MESSAGE_ID_TO_FORWARD = 15
-INTERVAL_HOURS = 1
 
 TARGET_CHANNELS = [
     {"channel": "flips"},
@@ -73,13 +72,9 @@ async def main():
     logger.info("Client started and authenticated.")
     while True:
         message = await client.get_messages(SOURCE_CHANNEL, ids=MESSAGE_ID_TO_FORWARD)
-        if not message:
-            logger.error(f"Message ID {MESSAGE_ID_TO_FORWARD} not found in {SOURCE_CHANNEL}.")
-        else:
-            logger.info(f"Forwarding message {MESSAGE_ID_TO_FORWARD} from {SOURCE_CHANNEL}...")
+        if message:
             await forward_message(message)
-        logger.info(f"Sleeping for {INTERVAL_HOURS} hour(s)...")
-        await asyncio.sleep(INTERVAL_HOURS * 3600)
+        await asyncio.sleep(60)  # 60 second gap to avoid Telegram spam ban
 
 
 if __name__ == "__main__":
