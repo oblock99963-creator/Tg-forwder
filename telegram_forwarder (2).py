@@ -1,19 +1,21 @@
 from telethon import TelegramClient
 from telethon.tl.functions.messages import ForwardMessagesRequest
+from telethon.sessions import StringSession
 import asyncio
 import logging
 import random
+import os
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
+API_HASH = os.environ.get("API_HASH", "")
 API_ID = 31620520
-API_HASH = "PASTE_YOUR_NEW_API_HASH_HERE"
-SESSION_NAME = "forwarder_session"
+SESSION_STRING = os.environ.get("SESSION_STRING", "")
 
 SOURCE_CHANNEL = "synogu"
 MESSAGE_ID_TO_FORWARD = 15
-INTERVAL_HOURS = 1  # change to 2, 3 etc. to send less often
+INTERVAL_HOURS = 1
 
 TARGET_CHANNELS = [
     {"channel": "flips"},
@@ -25,7 +27,8 @@ TARGET_CHANNELS = [
 
 FORWARD_DELAY = 2.0
 
-client = TelegramClient(SESSION_NAME, API_ID, API_HASH)
+string_session = StringSession(SESSION_STRING) if SESSION_STRING else StringSession()
+client = TelegramClient(string_session, API_ID, API_HASH)
 
 
 async def forward_message(message):
